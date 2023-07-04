@@ -1,4 +1,4 @@
-Example 1:
+//Example 1:
 
 <style>{`
 [id="signer_1_applicant.fieldlist_1_comp"]>fieldset>legend {
@@ -7,7 +7,7 @@ Example 1:
 `}</style>
 
 
-Example 2:
+//Example 2:
 
 const style = `
 [id="signer_1_applicant.fieldlist_1_comp"]>fieldset>legend {
