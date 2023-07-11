@@ -231,7 +231,6 @@ def move_zip_files():
                     f'{datetime.datetime.now()}: The {filename} been moved into ./unzip')
                 unzip_all_files()
 
-
 def unzip_all_files():
     os.makedirs('./unzipped', exist_ok=True)
     zip_files = glob.glob('./unzip/*.zip')
@@ -247,9 +246,6 @@ def unzip_all_files():
             f'{datetime.datetime.now()}: No ZIP files found in "./unzip" directory')
         return
 
-# Function to find FSD in an XML file
-
-
 def find_fsd(xml_file):
     tree = ET.parse(xml_file)
     root = tree.getroot()
@@ -257,8 +253,6 @@ def find_fsd(xml_file):
     if fsd_element is not None:
         return fsd_element.text
     return None
-
-# Function to send email with a PDF file attached
 
 
 def send_email(fsd_email, pdf_file, folder):
@@ -276,7 +270,6 @@ def send_email(fsd_email, pdf_file, folder):
                            subtype='pdf', filename=pdf_file)
 
     with smtplib.SMTP('10.18.11.64') as smtp:
-        # smtp.login(email_address, email_app_password)
         smtp.send_message(msg)
         logging.info(
             f'{datetime.datetime.now()}: {pdf_file} sent to {fsd_email}')
@@ -303,7 +296,6 @@ def main():
 
         if fsd_in_xml:
             for fsd, fsd_email in fsd_list:
-                # If FSD in the XML file matches one in the list, send email with PDF attached
                 if fsd == fsd_in_xml:
                     pdf_files = glob.glob(
                         f'./unzipped/{folder}/convertedData/*.pdf')
@@ -320,7 +312,7 @@ def main():
                 else:
                     status = 'FSD unit not found in list'
             else:
-                status = 'FSD not found in XML'
+                status = 'XML not found'
         logging.info(f'{datetime.datetime.now()}: {folder}: {status}')
 
 
