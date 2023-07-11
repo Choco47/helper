@@ -7,14 +7,14 @@ import xml.etree.ElementTree as ET
 import logging
 import datetime
 import shutil
+import re
 
 logging.basicConfig(filename='status_log.txt', level=logging.INFO)
 
 fsd_list = [
-    ["testing fsd", "kelvin.fsd.testing@gmail.com"]
     # Hong Kong Fire Commend
     # Central Fire Station
-    ["cfs", ""],
+    ["cfs", "cjp_itmu_5@hkfsd.gov.hk"],
     # Kotewall Fire Station
     ["kfs", ""],
     # Kong Wan Fire Station
@@ -236,10 +236,10 @@ def unzip_all_files():
     os.makedirs('./unzipped', exist_ok=True)
     zip_files = glob.glob('./unzip/*.zip')
     for zip_file in zip_files:
-        folder_name = os.path.splitext(os.path.basename(zip_file))[0]
-        os.makedirs(f'./unzipped/{folder_name}', exist_ok=True)
+        # folder_name = os.path.splitext(os.path.basename(zip_file))[0]
+        # os.makedirs(f'./unzipped/{folder_name}', exist_ok=True)
         with zipfile.ZipFile(zip_file, 'r') as zfile:
-            zfile.extractall(f'./unzipped/{folder_name}')
+            zfile.extractall(f'./unzipped/')
             logging.info(f'{datetime.datetime.now()}: {zip_file} unzipped')
         os.remove(zip_file)
     if not zip_files:
@@ -261,11 +261,11 @@ def find_fsd(xml_file):
 # Function to send email with a PDF file attached
 
 
-def send_email(fsd_email, pdf_file):
-    email_address = 'kelvin.chu1122@gmail.com'
-    email_app_password = 'brwgearofnryfinh'
+def send_email(fsd_email, pdf_file, folder):
+    email_address = 'efax_admin@hkfsd.hksarg'
+    email_app_password = ''
     msg = EmailMessage()
-    msg['Subject'] = 'FSD PDF file'
+    msg['Subject'] = 'Application for Visit to FSD Premises 申請參觀消防處單位 (參考編號：' + re.split('_',str(folder),5)[5]+')'
     msg['From'] = email_address
     msg['To'] = fsd_email
 
@@ -275,30 +275,25 @@ def send_email(fsd_email, pdf_file):
         msg.add_attachment(pdf.read(), maintype='application',
                            subtype='pdf', filename=pdf_file)
 
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-        smtp.login(email_address, email_app_password)
+    with smtplib.SMTP('10.18.11.64') as smtp:
+        # smtp.login(email_address, email_app_password)
         smtp.send_message(msg)
         logging.info(
             f'{datetime.datetime.now()}: {pdf_file} sent to {fsd_email}')
 
 
-def move_folders_to_sent():
-    os.makedirs(sent_folder, exist_ok=True)
+def move_folder_to_sent(folder):
+    os.makedirs('./sent', exist_ok=True)
     sent_folder = "./sent"
-    unzipped_folders = os.listdir('./unzipped')
-    for folder in unzipped_folders:
-        shutil.move(f'./unzipped/{folder}', sent_folder)
-    logging.info(
-        f'{datetime.datetime.now()}: All folders moved to "sent" directory')
+    shutil.move(f'./unzipped/{folder}', sent_folder)
 
 
 def main():
     move_zip_files()
     unzipped_folders = os.listdir('./unzipped')
-
     for folder in unzipped_folders:
         xml_files = glob.glob(
-            f'./unzipped/{folder}/{folder}/convertedData/*.xml')
+            f'./unzipped/{folder}/convertedData/*.xml')
         if not xml_files:
             logging.error(
                 f'{datetime.datetime.now()}: No XML files found in {folder}. Skipping.')
@@ -311,15 +306,16 @@ def main():
                 # If FSD in the XML file matches one in the list, send email with PDF attached
                 if fsd == fsd_in_xml:
                     pdf_files = glob.glob(
-                        f'./unzipped/{folder}/{folder}/convertedData/*.pdf')
+                        f'./unzipped/{folder}/convertedData/*.pdf')
                     if not pdf_files:
                         status = 'PDF not found in folder'
                         logging.error(
                             f'{datetime.datetime.now()}: {folder}: {status}')
                         break
                     pdf_file = pdf_files[0]
-                    send_email(fsd_email, pdf_file)
+                    send_email(fsd_email, pdf_file,folder)
                     status = 'Success, Email sent'
+                    move_folder_to_sent(folder)
                     break
                 else:
                     status = 'FSD unit not found in list'
@@ -327,8 +323,6 @@ def main():
                 status = 'FSD not found in XML'
         logging.info(f'{datetime.datetime.now()}: {folder}: {status}')
 
-
-move_folders_to_sent()
 
 
 if __name__ == "__main__":
