@@ -176,6 +176,7 @@ def move_zip_files():
     for filename in filenames:
         if filename.endswith('.zip'):
             if os.path.exists(f"./sent/{filename}"):
+                zip_found = True
                 logging.info(
                     f'{datetime.datetime.now()}: The {filename} already exists in ./sent, so skipping.')
             else:
@@ -183,6 +184,9 @@ def move_zip_files():
                 # logging.info(
                 #     f'{datetime.datetime.now()}: The {filename} been moved into ./unzip')
                 unzip_all_files()
+    if not zip_found:
+        logging.error(f'{datetime.datetime.now()}: No ZIP files found in "./" directory. Program End.')
+        return
 
 def unzip_all_files():
     os.makedirs('./unzipped', exist_ok=True)
@@ -235,6 +239,8 @@ def send_email(fsd_email, pdf_file, folder):
 #     # shutil.move(f'./sent/{folder}', sent_folder)
 #     shutil.make_archive(f'./sent/{folder}','zip', sent_folder)
 #     shutil.rmtree(f'./unzipped/{folder}')
+#     os.makedirs('./sent', exist_ok=True)
+#     shutil.move(f'./unzipped/{folder}', './sent')
 
 
 def main():
@@ -270,6 +276,8 @@ def main():
                     status = 'FSD unit not found in list'
             else:
                 status = 'XML not found'
+        else:
+            status = 'No element found in XML'
         logging.info(f'{datetime.datetime.now()}: {folder}: {status}')
 
 
