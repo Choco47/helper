@@ -172,6 +172,7 @@ fsd_list = [
 def move_zip_files():
     # os.makedirs('./unzip', exist_ok=True)
     filenames = os.listdir('.')
+    zip_found = False
 
     for filename in filenames:
         if filename.endswith('.zip'):
@@ -185,11 +186,10 @@ def move_zip_files():
                 #     f'{datetime.datetime.now()}: The {filename} been moved into ./unzip')
                 unzip_all_files()
     if not zip_found:
-        logging.error(f'{datetime.datetime.now()}: No ZIP files found in "./" directory. Program End.')
+        logging.error(f'{datetime.datetime.now()}: No ZIP files found in "./" directory. Program Halted.')
         return
 
 def unzip_all_files():
-    os.makedirs('./unzipped', exist_ok=True)
     # zip_files = glob.glob('./unzip/*.zip')
     zip_files = glob.glob('./*.zip')
     for zip_file in zip_files:
@@ -224,14 +224,17 @@ def send_email(fsd_email, pdf_file, folder):
     msg.set_content('Please find the PDF file attached. Submission date: '+re.split('_',str(folder),5)[1]+' '+re.split('_',str(folder),5)[2]+':'+re.split('_',str(folder),5)[3])
 
     with open(pdf_file, 'rb') as pdf:
-        msg.add_attachment(pdf.read(), maintype='application',
-                           subtype='pdf', filename=pdf_file)
+        msg.add_attachment(pdf.read(), maintype='application', subtype='pdf', filename=pdf_file)
 
     with smtplib.SMTP('10.18.11.64') as smtp:
-        smtp.send_message(msg)
-        logging.info(
-            f'{datetime.datetime.now()}: {pdf_file} sent to {fsd_email}')
-
+        try:
+            smtp.send_message(msg)
+            logging.info(f'{datetime.datetime.now()}: {pdf_file} sent to {fsd_email}')
+        except smtplib.SMTPRecipientsRefused as e:
+            logging.error(f'{datetime.datetime.now()}: {pdf_file} failed to send to {fsd_email}')
+            for recipient, (code, errmsg) in e.recipients.items():
+                logging.error(f'{recipient} was refused. Error code: {code}, Error message: {errmsg}')
+            
 
 # def move_folder_to_sent(folder):
 #     os.makedirs('./sent', exist_ok=True)
@@ -245,6 +248,7 @@ def send_email(fsd_email, pdf_file, folder):
 
 def main():
     move_zip_files()
+    os.makedirs('./unzipped', exist_ok=True)
     unzipped_folders = os.listdir('./unzipped')
     for folder in unzipped_folders:
         xml_files = glob.glob(
